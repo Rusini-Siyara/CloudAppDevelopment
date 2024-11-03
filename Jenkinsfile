@@ -9,16 +9,20 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    docker.build('cloudapp-image')
+                    docker.withServer('unix:///var/run/docker.sock') {
+                        docker.build('cloudapp-image')
+                    }
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    docker.image('cloudapp-image').inside {
-                        sh 'echo "Running tests..."'
-                        // Add your test commands here
+                    docker.withServer('unix:///var/run/docker.sock') {
+                        docker.image('cloudapp-image').inside {
+                            sh 'echo "Running tests..."'
+                            // Add your test commands here
+                        }
                     }
                 }
             }
@@ -26,7 +30,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    docker.image('cloudapp-image').run('-d -p 80:80')
+                    docker.withServer('unix:///var/run/docker.sock') {
+                        docker.image('cloudapp-image').run('-d -p 80:80')
+                    }
                 }
             }
         }
