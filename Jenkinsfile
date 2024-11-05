@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    environment {
+        JD_IMAGE = 'cloudapp-image' // Define the Docker image name here
+    }
     stages {
         // Stage 1: Checkout the code from GitHub repository
         stage('Checkout') {
@@ -14,9 +16,12 @@ pipeline {
         stage('Build') {
             steps {
                 script {
+                    // Debugging step to confirm JD_IMAGE is set correctly
+                    echo "Building Docker image with name: ${env.JD_IMAGE}"
+
                     // Connects to the Docker daemon and builds an image named 'cloudapp-image'
                     docker.withServer('unix:///var/run/docker.sock') {
-                        docker.build('cloudapp-image')
+                        docker.build(env.JD_IMAGE)
                     }
                 }
             }
@@ -28,7 +33,7 @@ pipeline {
                 script {
                     // Runs the 'cloudapp-image' in a container for testing purposes
                     docker.withServer('unix:///var/run/docker.sock') {
-                        docker.image('cloudapp-image').inside {
+                        docker.image(env.JD_IMAGE).inside {
                             // Replace with actual test commands if needed
                             sh 'echo "Running tests..."'
                         }
@@ -36,18 +41,5 @@ pipeline {
                 }
             }
         }
-
-        // Stage 4: Deploy the Docker Image
-        stage('Deploy') {
-            steps {
-                script {
-                    // Runs the 'cloudapp-image' as a background container on port 80
-                    docker.withServer('unix:///var/run/docker.sock') {
-                        docker.image('cloudapp-image').run('-d -p 80:80')
-                    }
-                }
-            }
-        }
     }
 }
-
